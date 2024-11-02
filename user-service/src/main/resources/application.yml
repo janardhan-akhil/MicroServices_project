@@ -1,0 +1,97 @@
+# Spring Boot Application Configuration in YAML format
+
+server:
+  port: 8081  # The port your service will run on
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/microservices # Replace with your DB connection URL
+    username: root  # Your MySQL username
+    password: akhila  # Your MySQL password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update  # Automatically creates/updates tables based on your entities
+    show-sql: true  # Show SQL queries in the console
+  application:
+    name: user-service  # The name of the microservice in Eureka
+  config:
+    import: optional:configserver:http://localhost:8085
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issue-uri: https://dev-63105764.okta.com/oauth2/default
+
+      client:
+        registration:
+          my-internal-client:
+            provider: okta
+            authorization-grant-type: client_credentials
+            scope: internal
+            client-id: 0oaks4yj5jqURFFrn5d7
+            client-secret: H1uf2ZSZqwp_ogTddpGnx1_CiGoAkUOuh2rGetmJfUtD-6mfpen84aRuSSu5cQ3w
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ratingHotelBreaker:
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 6s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+
+  retry:
+    instances:
+      ratingHotelService:
+        max-attempts: 3
+        wait-duration: 5s
+
+  ratelimiter:
+    instances:
+      userRateLimiter:
+        limit-refresh-period: 4s
+        limit-for-period: 2
+        timeout-duration: 0s
+
+
+okta:
+  oauth2:
+    issuer: https://dev-63105764.okta.com/oauth2/default
+    audience: api://default
+
+
+
+#eureka:
+#  instance:
+#    prefer-ip-address: true
+#  client:
+#    fetch-registry: true
+#    registry-with-eureka: true
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka
+
+
+
+
+
